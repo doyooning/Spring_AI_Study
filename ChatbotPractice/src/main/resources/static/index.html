@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>달건이 봇</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="chat-container">
+    <h2>달건이 봇</h2>
+    <div id="chat-box"></div>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="메시지 입력"/>
+        <button id="send-btn">전송</button>
+    </div>
+</div>
+
+<script>
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    let lastDisplayedDate = null; // 마지막으로 표시된 날짜를 저장하는 변수
+
+    // 시간 포맷 함수
+    function formatTimestamp(ts) {
+        const date = new Date(Number(ts));
+        return date.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // 채팅 기록 로드
+    async function loadChatHistory() {
+        try {
+            const response = await fetch('/ai/chat/history?userId=jangho');
+            if (!response.ok) throw new Error('히스토리 로드 실패');
+            const history = await response.json();
+
+            history.forEach(msg => {
+                addMessageWithTimestamp(msg.role, msg.content, msg.timestamp);
+            });
+        } catch (err) {
+            console.error('히스토리 로드 실패:', err);
+        }
+    }
+
+    loadChatHistory();
+
+    // 메시지 서버 전송 함수
+    async function sendMessageToServer(message) {
+        const response = await fetch('/ai/chat?userId=jangho', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({userInput: message})
+        });
+        return response;
+    }
+
+    // 전송 버튼 클릭 이벤트
+    sendBtn.addEventListener('click', handleSendMessage);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleSendMessage();
+        }
+    });
+
+    // === 메시지 추가 (전송 중/실패/성공) ===
+    function addMessage(role, content, isPending = false) {
+        const messageContainer = document.createElement('div');
+        messageContainer.className = `message-container ${role}`;
+
+        // 어시스턴트 메시지 프로필 추가
+        if (role === 'assistant') {
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'name';
+            nameDiv.textContent = '달건이';
+            chatBox.appendChild(nameDiv);
+
+            const img = document.createElement('img');
+            img.src = '/images/dalgeon.png';
+            img.alt = '달건이';
+            img.className = 'profile-pic';
+            messageContainer.appendChild(img);
+        }
+
+        // 말풍선 생성
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
+        messageDiv.innerHTML = content;
+
+        // 상태/타임스탬프 생성
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status';
+        if (isPending) {
+            statusSpan.textContent = '전송 중...';
+        }
+
+        // 사용자 메시지에만 타임스탬프를 왼쪽에 추가
+        if (role === 'user') {
+            messageContainer.appendChild(statusSpan); // 타임스탬프 먼저 추가
+            messageContainer.appendChild(messageDiv); // 말풍선 추가
+        } else {
+            messageContainer.appendChild(messageDiv); // 말풍선 먼저 추가
+            messageContainer.appendChild(statusSpan); // 타임스탬프 추가
+        }
+
+        // 메시지 컨테이너 추가 및 스크롤 업데이트
+        chatBox.appendChild(messageContainer);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        return messageContainer;
+    }
+
+    function formatDate(ts) {
+        const date = new Date(Number(ts));
+        return date.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+        });
+    }
+
+    function addMessageWithTimestamp(role, content, timestamp) {
+        // 날짜 구분선 삽입
+        if (timestamp) {
+            const messageDate = formatDate(timestamp);
+            if (messageDate !== lastDisplayedDate) {
+                const dateDivider = document.createElement('div');
+                dateDivider.className = 'date-divider';
+                dateDivider.textContent = messageDate;
+                chatBox.appendChild(dateDivider);
+                lastDisplayedDate = messageDate;
+            }
+        }
+
+        const messageContainer = addMessage(role, content, false);
+        const statusSpan = messageContainer.querySelector('.status');
+
+        if (timestamp && statusSpan) {
+            statusSpan.textContent = formatTimestamp(timestamp);
+            statusSpan.classList.add('timestamp'); // 타임스탬프 스타일 적용
+        }
+    }
+
+    async function handleSendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        // === Step 1: 날짜 구분선 추가 (사용자 메시지 위에 먼저 추가) ===
+        const now = Date.now();
+        const currentDateString = formatDate(now);
+        if (currentDateString !== lastDisplayedDate) {
+            const dateDivider = document.createElement('div');
+            dateDivider.className = 'date-divider';
+            dateDivider.textContent = currentDateString;
+            chatBox.appendChild(dateDivider);
+            lastDisplayedDate = currentDateString;
+        }
+
+        // === Step 2: 사용자 메시지 추가 (전송 중 상태) ===
+        const userMessageContainer = addMessage('user', message, true);
+        userInput.value = '';
+
+        try {
+            const response = await sendMessageToServer(message);
+            const data = await response.json();
+
+            // === Step 3: 전송 성공 후, 사용자 메시지의 "전송 중..."을 시간으로 업데이트 ===
+            updateUserMessageContainer(userMessageContainer, data.userTimestamp);
+
+            // === Step 4: 어시스턴트 메시지 추가 ===
+            addMessageWithTimestamp('assistant', data.content, data.assistantTimestamp);
+        } catch (err) {
+            showErrorStatus(userMessageContainer, message);
+        }
+    }
+
+
+    function updateUserMessageContainer(messageContainer, timestamp) {
+        const statusSpan = messageContainer.querySelector('.status');
+
+        if (statusSpan) {
+            statusSpan.textContent = formatTimestamp(timestamp);
+        }
+    }
+
+    function showErrorStatus(messageContainer, originalMessage) {
+        const statusSpan = messageContainer.querySelector('.status');
+        statusSpan.textContent = '';
+
+        const retryButton = document.createElement('button');
+        retryButton.textContent = '↻';
+        retryButton.className = 'retry-button';
+
+        const removeButton = document.createElement('button');
+        removeButton.textContent = '⨉';
+        removeButton.className = 'fail-status';
+
+        retryButton.addEventListener('click', () => {
+            resendMessage(originalMessage, messageContainer);
+        });
+
+        removeButton.addEventListener('click', () => {
+            messageContainer.remove();
+        });
+
+        statusSpan.appendChild(retryButton);
+        statusSpan.appendChild(removeButton);
+    }
+
+    async function resendMessage(message, messageContainer) {
+        const statusSpan = messageContainer.querySelector('.status');
+        statusSpan.textContent = '전송 중...';
+
+        chatBox.removeChild(messageContainer);
+        chatBox.appendChild(messageContainer);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const response = await sendMessageToServer(message);
+            const data = await response.json();
+            updateUserMessageContainer(messageContainer, data.userTimestamp);
+            addMessageWithTimestamp('assistant', data.content, data.assistantTimestamp);
+        } catch (err) {
+            showErrorStatus(messageContainer, message);
+        }
+    }
+</script>
+
+</body>
+</html>
