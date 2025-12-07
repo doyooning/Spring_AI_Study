@@ -1,5 +1,6 @@
 package com.dynii.springai.domain.openai.service;
 
+import com.dynii.springai.domain.openai.dto.CityResponseDTO;
 import com.dynii.springai.domain.openai.entity.ChatEntity;
 import com.dynii.springai.domain.openai.repository.ChatRepository;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
@@ -57,7 +58,9 @@ public class OpenAIService {
     }
 
     // Chat 모델
-    public String generate(String text) {
+    public CityResponseDTO generate(String text) {
+
+        ChatClient chatClient = ChatClient.create(openAiChatModel);
 
         // 메시지
         SystemMessage systemMessage = new SystemMessage("");
@@ -74,8 +77,9 @@ public class OpenAIService {
         Prompt prompt = new Prompt(List.of(systemMessage, userMessage, assistantMessage), options);
 
         // 요청 및 응답
-        ChatResponse response = openAiChatModel.call(prompt);
-        return response.getResult().getOutput().getText();
+        return chatClient.prompt(prompt)
+                .call()
+                .entity(CityResponseDTO.class);
     }
 
     public Flux<String> generateStream(String text) {
