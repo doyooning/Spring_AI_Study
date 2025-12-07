@@ -1,4 +1,4 @@
-package com.dynii.springai.service;
+package com.dynii.springai.domain.openai.service;
 
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
