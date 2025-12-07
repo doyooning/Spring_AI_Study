@@ -1,5 +1,6 @@
 package com.dynii.springai.api;
 
+import com.dynii.springai.domain.openai.dto.CityResponseDTO;
 import com.dynii.springai.domain.openai.entity.ChatEntity;
 import com.dynii.springai.domain.openai.service.ChatService;
 import com.dynii.springai.domain.openai.service.OpenAIService;
@@ -30,7 +31,7 @@ public class ChatController {
     // 논 스트림
     @ResponseBody
     @PostMapping("/chat")
-    public String chat(@RequestBody Map<String, String> body) {
+    public CityResponseDTO chat(@RequestBody Map<String, String> body) {
         return openAIService.generate(body.get("text"));
     }
 
