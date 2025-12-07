@@ -1,11 +1,14 @@
 package com.dynii.springai.domain.openai.service;
 
+import com.dynii.springai.domain.openai.entity.ChatEntity;
+import com.dynii.springai.domain.openai.repository.ChatRepository;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -36,17 +39,20 @@ public class OpenAIService {
     private final OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel;
 
     private final ChatMemoryRepository chatMemoryRepository;
+    private final ChatRepository chatRepository;
 
     // 생성자
     public OpenAIService(OpenAiChatModel openAiChatModel, OpenAiEmbeddingModel openAiEmbeddingModel,
                          OpenAiImageModel openAiImageModel, OpenAiAudioSpeechModel openAiAudioSpeechModel,
-                         OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel, ChatMemoryRepository chatMemoryRepository) {
+                         OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel, ChatMemoryRepository chatMemoryRepository,
+                         ChatRepository chatRepository) {
         this.openAiChatModel = openAiChatModel;
         this.openAiEmbeddingModel = openAiEmbeddingModel;
         this.openAiImageModel = openAiImageModel;
         this.openAiAudioSpeechModel = openAiAudioSpeechModel;
         this.openAiAudioTranscriptionModel = openAiAudioTranscriptionModel;
         this.chatMemoryRepository = chatMemoryRepository;
+        this.chatRepository = chatRepository;
     }
 
     // Chat 모델
@@ -76,6 +82,13 @@ public class OpenAIService {
         // 유저&페이지별 ChatMemory를 관리하기 위한 key (우선은 명시적으로)
         String userId = "dynii1923" + "_" + "3";
 
+        // 전체 대화 저장용
+        ChatEntity chatUserEntity = new ChatEntity();
+        chatUserEntity.setUserId(userId);
+        chatUserEntity.setType(MessageType.USER);
+        chatUserEntity.setContent(text);
+
+        // 메시지
         ChatMemory chatMemory = MessageWindowChatMemory.builder()
                 .maxMessages(10)
                 .chatMemoryRepository(chatMemoryRepository)
@@ -105,6 +118,14 @@ public class OpenAIService {
 
                     chatMemory.add(userId, new AssistantMessage(responseBuffer.toString()));
                     chatMemoryRepository.saveAll(userId, chatMemory.get(userId));
+
+                    // 전체 대화 저장용
+                    ChatEntity chatAssistantEntity = new ChatEntity();
+                    chatAssistantEntity.setUserId(userId);
+                    chatAssistantEntity.setType(MessageType.ASSISTANT);
+                    chatAssistantEntity.setContent(responseBuffer.toString());
+
+                    chatRepository.saveAll(List.of(chatUserEntity, chatAssistantEntity));
                 });
     }
 
