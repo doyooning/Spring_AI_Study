@@ -1,6 +1,5 @@
 package com.dynii.springai.config;
 
-import com.redis.lettucemod.RedisModulesClient;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.redis.RedisVectorStore;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,12 +30,6 @@ public class RedisConfig {
         return configuration;
     }
 
-    @Bean(destroyMethod = "shutdown")
-    public RedisModulesClient redisModulesClient(RedisVectorStoreProperties properties) {
-        String uri = String.format("redis://%s%s:%d", properties.getPassword() != null && !properties.getPassword().isEmpty() ? properties.getPassword() + "@" : "", properties.getHost(), properties.getPort());
-        return RedisModulesClient.create(uri);
-    }
-
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
@@ -45,17 +38,5 @@ public class RedisConfig {
         template.setValueSerializer(new StringRedisSerializer());
         template.afterPropertiesSet();
         return template;
-    }
-
-    @Bean
-    public RedisVectorStore redisVectorStore(
-            JedisPooled jedisPooled,
-            EmbeddingModel embeddingModel,
-            RagProperties properties
-    ) {
-        return RedisVectorStore.builder(jedisPooled, embeddingModel)
-                .indexName(properties.getIndexName())
-                .prefix(properties.getPrefix())
-                .build();
     }
 }

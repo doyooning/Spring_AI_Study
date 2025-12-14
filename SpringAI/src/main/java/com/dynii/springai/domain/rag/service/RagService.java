@@ -47,8 +47,12 @@ public class RagService {
 
         List<Message> messages = new ArrayList<>();
         messages.add(new SystemMessage(
-                "You are a helpful assistant that answers based on the provided context. " +
-                        "If the answer is not in the context, say you do not know."
+                """
+                        당신은 고객지원을 대체하는 AI 상담 챗봇입니다.
+                        반드시 제공된 문서(Context)에 포함된 정보만을 사용하여 답변하세요.
+                        문서에 근거가 없는 질문에는 추측하거나 일반적인 답변을 하지 말고
+                        "해당 내용은 현재 제공된 정보로는 안내할 수 없습니다."라고 답변하세요.
+                        """
         ));
         messages.add(new UserMessage("Context:\n" + context + "\n\nQuestion: " + question));
 
