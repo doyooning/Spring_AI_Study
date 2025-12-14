@@ -4,6 +4,9 @@ import com.dynii.springai.domain.openai.dto.CityResponseDTO;
 import com.dynii.springai.domain.openai.entity.ChatEntity;
 import com.dynii.springai.domain.openai.service.ChatService;
 import com.dynii.springai.domain.openai.service.OpenAIService;
+import com.dynii.springai.domain.rag.dto.RagRequest;
+import com.dynii.springai.domain.rag.dto.RagResponse;
+import com.dynii.springai.domain.rag.service.RagService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -16,10 +19,12 @@ public class ChatController {
 
     private final OpenAIService openAIService;
     private final ChatService chatService;
+    private final RagService ragService;
 
-    public ChatController(OpenAIService openAIService, ChatService chatService) {
+    public ChatController(OpenAIService openAIService, ChatService chatService, RagService ragService) {
         this.openAIService = openAIService;
         this.chatService = chatService;
+        this.ragService = ragService;
     }
 
     // 채팅 페이지 접속
@@ -46,5 +51,11 @@ public class ChatController {
     @PostMapping("/chat/history/{userid}")
     public List<ChatEntity> getChatHistory(@PathVariable("userid") String userId) {
         return chatService.readAllChats(userId);
+    }
+
+    @ResponseBody
+    @PostMapping("/chat/rag")
+    public RagResponse chatWithRag(@RequestBody RagRequest request) {
+        return ragService.chat(request.getQuestion(), 4);
     }
 }

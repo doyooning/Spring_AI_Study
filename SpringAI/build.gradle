@@ -31,12 +31,15 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 
     // Spring AI
+    implementation platform("org.springframework.ai:spring-ai-bom:1.0.3")
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
     implementation 'org.springframework.ai:spring-ai-advisors-vector-store'
 
     // Redis
+    implementation "org.springframework.ai:spring-ai-starter-vector-store-redis"
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'com.redis:lettucemod:4.5.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -45,12 +48,6 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.ai:spring-ai-bom:1.0.3"
-    }
 }
 
 tasks.named('test') {
