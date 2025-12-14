@@ -4,11 +4,13 @@ import com.dynii.springai.domain.rag.dto.RagResponse;
 import com.dynii.springai.config.RedisVectorStoreProperties;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.redis.RedisVectorStore;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,20 +33,30 @@ public class RagService {
 
     public RagResponse chat(String question, int topK) {
         int candidates = topK > 0 ? topK : properties.getTopK();
-        List<Document> documents = vectorStore.similaritySearch(question, candidates);
+
+        SearchRequest searchRequest = SearchRequest.builder()
+                .query(question)
+                .topK(candidates)
+                .build();
+
+        List<Document> documents = vectorStore.similaritySearch(searchRequest);
 
         String context = documents.stream()
-                .map(Document::getContent)
+                .map(Document::getText)   // 아래 2-2 설명
                 .collect(Collectors.joining("\n\n"));
 
         List<Message> messages = new ArrayList<>();
-        messages.add(new UserMessage("You are a helpful assistant that answers based on the provided context. If the answer is not in the context, say you do not know.\n\nContext:\n" + context + "\n\nQuestion: " + question));
+        messages.add(new SystemMessage(
+                "You are a helpful assistant that answers based on the provided context. " +
+                        "If the answer is not in the context, say you do not know."
+        ));
+        messages.add(new UserMessage("Context:\n" + context + "\n\nQuestion: " + question));
 
         ChatClient chatClient = ChatClient.create(chatModel);
         String answer = chatClient.prompt(new Prompt(messages)).call().content();
 
         List<String> sources = documents.stream()
-                .map(doc -> doc.getMetadata().getOrDefault("source", ""))
+                .map(doc -> String.valueOf(doc.getMetadata().getOrDefault("source", "")))
                 .toList();
 
         return new RagResponse(answer, sources);
