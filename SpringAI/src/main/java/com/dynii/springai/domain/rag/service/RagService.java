@@ -1,7 +1,8 @@
 package com.dynii.springai.domain.rag.service;
 
 import com.dynii.springai.domain.rag.dto.RagResponse;
-import com.dynii.springai.config.RedisVectorStoreProperties;
+import com.dynii.springai.config.RagVectorProperties;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -18,14 +19,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Log4j2
 @Service
 public class RagService {
 
     private final RedisVectorStore vectorStore;
     private final ChatModel chatModel;
-    private final RedisVectorStoreProperties properties;
+    private final RagVectorProperties properties;
 
-    public RagService(RedisVectorStore vectorStore, ChatModel chatModel, RedisVectorStoreProperties properties) {
+    public RagService(RedisVectorStore vectorStore, ChatModel chatModel, RagVectorProperties properties) {
         this.vectorStore = vectorStore;
         this.chatModel = chatModel;
         this.properties = properties;
@@ -33,6 +35,7 @@ public class RagService {
 
     public RagResponse chat(String question, int topK) {
         int candidates = topK > 0 ? topK : properties.getTopK();
+        log.info("🔥 RAG chat() called. question={}", question);
 
         SearchRequest searchRequest = SearchRequest.builder()
                 .query(question)
@@ -41,8 +44,10 @@ public class RagService {
 
         List<Document> documents = vectorStore.similaritySearch(searchRequest);
 
+        log.info("🔥 similaritySearch result size={}", documents.size());
+
         String context = documents.stream()
-                .map(Document::getText)   // 아래 2-2 설명
+                .map(Document::getText)
                 .collect(Collectors.joining("\n\n"));
 
         List<Message> messages = new ArrayList<>();
@@ -68,6 +73,7 @@ public class RagService {
 
     public void ingest(List<Document> documents) {
         vectorStore.add(documents);
+        log.info("vectorStore added: " + documents);
     }
 
     public Document createDocument(String content, Map<String, Object> metadata) {

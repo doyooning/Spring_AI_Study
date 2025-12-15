@@ -1,29 +1,18 @@
 package com.dynii.springai.domain.rag.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
 public class RagResponse {
     private String answer;
     private List<String> sources;
 
     public RagResponse(String answer, List<String> sources) {
         this.answer = answer;
-        this.sources = sources;
-    }
-
-    public String getAnswer() {
-        return answer;
-    }
-
-    public void setAnswer(String answer) {
-        this.answer = answer;
-    }
-
-    public List<String> getSources() {
-        return sources;
-    }
-
-    public void setSources(List<String> sources) {
         this.sources = sources;
     }
 }
