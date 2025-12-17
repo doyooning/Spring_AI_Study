@@ -2,6 +2,7 @@ package com.dynii.springai.domain.rag.service;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.document.DocumentReader;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.vectorstore.redis.RedisVectorStore;
 import org.springframework.core.io.InputStreamResource;
@@ -37,6 +38,12 @@ public class RagIngestService {
         } catch (IOException e) {
             throw new RuntimeException("문서 임베딩 실패", e);
         }
+    }
+
+    public void ingest(Resource resource) {
+        DocumentReader reader = new TikaDocumentReader(resource);
+        List<Document> documents = reader.get();
+        vectorStore.add(documents);
     }
 
 }

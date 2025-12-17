@@ -19,9 +19,8 @@ public class RagIngestor {
     @PostConstruct
     public void seedSampleDocuments() {
         List<Document> documents = List.of(
-                ragService.createDocument("스프링 AI는 스프링 부트 애플리케이션에서 AI 모델을 쉽게 사용할 수 있게 해주는 프로젝트입니다.", Map.of("source", "spring-ai-intro")),
-                ragService.createDocument("Redis는 인메모리 데이터 스토어로 빠른 읽기와 쓰기 성능을 제공합니다.", Map.of("source", "redis-overview")),
-                ragService.createDocument("벡터 검색은 문서의 의미적 유사성을 기반으로 검색하는 방법입니다.", Map.of("source", "vector-search"))
+                ragService.createDocument("DESKIT은 개인의 작업 공간을 꾸미는 '데스크테리어' 상품에 특화된 라이브커머스 기반 쇼핑 플랫폼입니다.", Map.of("source", "deskit-intro")),
+                ragService.createDocument("DESKIT의 개발자는 고하원, 김도윤, 박용헌, 주장우입니다.", Map.of("source", "deskit-developers"))
         );
         ragService.ingest(documents);
     }
