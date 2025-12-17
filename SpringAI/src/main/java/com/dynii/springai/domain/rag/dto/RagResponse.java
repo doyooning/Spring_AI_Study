@@ -10,9 +10,11 @@ import java.util.List;
 public class RagResponse {
     private String answer;
     private List<String> sources;
+    private boolean escalated;
 
-    public RagResponse(String answer, List<String> sources) {
+    public RagResponse(String answer, List<String> sources, boolean escalated) {
         this.answer = answer;
         this.sources = sources;
+        this.escalated = escalated;
     }
 }

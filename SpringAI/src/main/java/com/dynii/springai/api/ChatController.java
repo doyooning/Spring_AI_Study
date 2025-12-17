@@ -38,6 +38,11 @@ public class ChatController {
         return "chat";
     }
 
+    @GetMapping("/rag")
+    public String chatRagPage() {
+        return "rag";
+    }
+
     // 논 스트림
     @ResponseBody
     @PostMapping("/chat")
@@ -59,7 +64,7 @@ public class ChatController {
     }
 
     @ResponseBody
-    @PostMapping("/chat/rag")
+    @PostMapping("/rag")
     public RagResponse chatWithRag(@RequestBody RagRequest request) {
         return ragService.chat(request.getQuestion(), 4);
     }

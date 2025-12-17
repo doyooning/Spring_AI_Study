@@ -43,7 +43,18 @@ public class RagIngestService {
     public void ingest(Resource resource) {
         DocumentReader reader = new TikaDocumentReader(resource);
         List<Document> documents = reader.get();
-        vectorStore.add(documents);
+
+        String source = resource.getFilename();
+        List<Document> enrichedDocs = documents.stream()
+                .map(doc -> new Document(
+                        doc.getText(),
+                        Map.of(
+                                "source", source
+                        )
+                ))
+                .toList();
+        vectorStore.add(enrichedDocs);
+        log.info("📄 RAG 문서 업로드: {}", resource.getFilename());
     }
 
 }
