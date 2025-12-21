@@ -3,6 +3,7 @@ package com.dynii.springai.domain.rag.service;
 import com.dynii.springai.domain.rag.dto.RagRequest;
 import com.dynii.springai.domain.rag.dto.RagResponse;
 import com.dynii.springai.config.RagVectorProperties;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
@@ -22,17 +23,12 @@ import java.util.stream.Collectors;
 
 @Log4j2
 @Service
+@RequiredArgsConstructor
 public class RagService {
 
     private final RedisVectorStore vectorStore;
     private final ChatModel chatModel;
     private final RagVectorProperties properties;
-
-    public RagService(RedisVectorStore vectorStore, ChatModel chatModel, RagVectorProperties properties) {
-        this.vectorStore = vectorStore;
-        this.chatModel = chatModel;
-        this.properties = properties;
-    }
 
     // 관리자 이관 트리거
     private static final String ESCALATION_TRIGGER = "관리자 연결";
