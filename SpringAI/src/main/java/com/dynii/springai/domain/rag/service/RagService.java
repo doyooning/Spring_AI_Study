@@ -28,6 +28,7 @@ public class RagService {
     private final RedisVectorStore vectorStore;
     private final ChatModel chatModel;
     private final RagVectorProperties properties;
+    private final AdminEscalationService adminEscalationService;
 
     // 관리자 이관 트리거
     private static final String ESCALATION_TRIGGER = "관리자 연결";
@@ -35,13 +36,13 @@ public class RagService {
     public ChatResponse chat(String question, int topK) {
         // 이관 여부를 담는 escalated
         boolean escalated = false;
+        long conversationId = 1L;
 
         // 트리거가 포함된 질문이면 이관
         if (question != null && question.contains(ESCALATION_TRIGGER)) {
 
             /* 여기에 이관 조치할 때 수행할 로직 추가 */
-
-            escalated = true;
+            return adminEscalationService.escalate(conversationId);
         }
 
         int candidates = topK > 0 ? topK : properties.getTopK();
