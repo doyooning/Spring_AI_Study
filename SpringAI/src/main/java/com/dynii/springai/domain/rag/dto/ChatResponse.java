@@ -7,12 +7,12 @@ import java.util.List;
 
 @Getter
 @Setter
-public class RagResponse {
+public class ChatResponse {
     private String answer;
     private List<String> sources;
     private boolean escalated;
 
-    public RagResponse(String answer, List<String> sources, boolean escalated) {
+    public ChatResponse(String answer, List<String> sources, boolean escalated) {
         this.answer = answer;
         this.sources = sources;
         this.escalated = escalated;

@@ -1,7 +1,6 @@
 package com.dynii.springai.domain.rag.service;
 
-import com.dynii.springai.domain.rag.dto.RagRequest;
-import com.dynii.springai.domain.rag.dto.RagResponse;
+import com.dynii.springai.domain.rag.dto.ChatResponse;
 import com.dynii.springai.config.RagVectorProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -33,7 +32,7 @@ public class RagService {
     // 관리자 이관 트리거
     private static final String ESCALATION_TRIGGER = "관리자 연결";
 
-    public RagResponse chat(String question, int topK) {
+    public ChatResponse chat(String question, int topK) {
         // 이관 여부를 담는 escalated
         boolean escalated = false;
 
@@ -66,8 +65,12 @@ public class RagService {
                 """
                         당신은 고객지원을 대체하는 AI 상담 챗봇입니다.
                         
-                        반드시 제공된 문서(Context)에 포함된 정보만을 근거로 답변해야 합니다.
-                        문서에 명시되지 않은 내용에 대해서는 추측하거나 일반적인 안내를 하지 마세요.
+                        문서에 질문과 정확히 일치하는 내용이 없더라도,
+                        관련된 정보가 문서에 일부라도 포함되어 있다면
+                        그 범위 내에서만 요약하여 안내하세요.
+                        
+                        단, 문서에 전혀 근거가 없는 내용은
+                        추측하거나 일반적인 답변을 하지 마세요.
                         
                         다음과 같은 경우에는 직접 답변하지 말고,
                         관리자 상담이 필요하다는 안내를 하세요.
@@ -82,18 +85,18 @@ public class RagService {
                         위 조건에 해당하는 경우에는
                         반드시 아래 문장 중 하나의 형태로만 응답하세요.
                         
-                        - "해당 내용은 현재 제공된 정보로는 안내할 수 없습니다. "관리자 연결"을 입력하시면 관리자에게 문의 접수됩니다."
-                        - "개인 정보 또는 개별 확인이 필요한 내용으로, 관리자 상담을 통해 안내가 가능합니다. "관리자 연결"을 입력하시면 관리자에게 문의 접수됩니다."
-                        - "요청하신 내용은 관리자 확인이 필요하여 상담 연결이 필요합니다. "관리자 연결"을 입력하시면 관리자에게 문의 접수됩니다."
-                        - "관리자와 직접 상담을 원하시는 것 같습니다. "관리자 연결"을 입력하시면 관리자에게 문의 접수됩니다."
+                        - "해당 내용은 현재 제공된 정보로는 안내드릴 수 없어요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요."
+                        - "개인 정보 또는 개별 확인이 필요한 내용으로, 관리자 상담을 통해 안내가 가능해요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요."
+                        - "요청하신 내용은 관리자 확인이 필요하여 상담 연결이 필요해요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요."
+                        - "관리자와 직접 상담을 원하시는 것 같아요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요."
                         
                         절대 위 문구 외의 임의의 답변을 생성하지 마세요.
                         
                         만약 고객이 "관리자 연결"이라고 입력한 경우에는
                         반드시 아래 문장 중 하나의 형태로만 응답하세요.
                         
-                        - "현재 상담 내용이 관리자에게 이관되었습니다. 곧 관리자를 통해 답변드리겠습니다."
-                        - "고객님의 문의가 관리자에게 이관되었습니다. 곧 관리자를 통해 답변드리겠습니다."
+                        - "현재 상담 내용이 관리자에게 이관되었어요. 곧 관리자를 통해 답변드릴게요."
+                        - "고객님의 문의가 관리자에게 이관되었어요. 곧 관리자를 통해 답변드릴게요."
                         
                         절대 위 문구 외의 임의의 답변을 생성하지 마세요.
                         """
@@ -109,7 +112,7 @@ public class RagService {
 
         log.info("Chatbot sources: {}", sources);
         log.info("Chatbot escalated: {}", escalated);
-        return new RagResponse(answer, sources, escalated);
+        return new ChatResponse(answer, sources, escalated);
     }
 
     public void ingest(List<Document> documents) {

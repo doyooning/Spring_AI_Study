@@ -3,6 +3,8 @@ package com.dynii.springai.domain.openai.service;
 import com.dynii.springai.domain.openai.dto.CityResponseDTO;
 import com.dynii.springai.domain.openai.entity.ChatEntity;
 import com.dynii.springai.domain.openai.repository.ChatRepository;
+import com.dynii.springai.domain.rag.dto.ChatResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
 import org.springframework.ai.chat.client.ChatClient;
@@ -13,7 +15,6 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.embedding.Embedding;
 import org.springframework.ai.embedding.EmbeddingOptions;
@@ -32,6 +33,7 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class OpenAIService {
 
     private final OpenAiChatModel openAiChatModel;
@@ -43,28 +45,26 @@ public class OpenAIService {
     private final ChatMemoryRepository chatMemoryRepository;
     private final ChatRepository chatRepository;
 
-    // 생성자
-    public OpenAIService(OpenAiChatModel openAiChatModel, OpenAiEmbeddingModel openAiEmbeddingModel,
-                         OpenAiImageModel openAiImageModel, OpenAiAudioSpeechModel openAiAudioSpeechModel,
-                         OpenAiAudioTranscriptionModel openAiAudioTranscriptionModel, ChatMemoryRepository chatMemoryRepository,
-                         ChatRepository chatRepository) {
-        this.openAiChatModel = openAiChatModel;
-        this.openAiEmbeddingModel = openAiEmbeddingModel;
-        this.openAiImageModel = openAiImageModel;
-        this.openAiAudioSpeechModel = openAiAudioSpeechModel;
-        this.openAiAudioTranscriptionModel = openAiAudioTranscriptionModel;
-        this.chatMemoryRepository = chatMemoryRepository;
-        this.chatRepository = chatRepository;
-    }
-
     // Chat 모델
-    public CityResponseDTO generate(String text) {
+    public ChatResponse generate(String text) {
 
         ChatClient chatClient = ChatClient.create(openAiChatModel);
 
         // 메시지
-        SystemMessage systemMessage = new SystemMessage("");
+        // SystemMessage = 프롬프팅할 내용
+        SystemMessage systemMessage = new SystemMessage("""
+                당신은 고객지원을 대체하는 AI 상담 챗봇입니다.
+                
+                고객들이 편하게 문의할 수 있도록, "~요"로 끝나도록 대답해주세요.
+                
+                답변의 길이가 너무 짧아(6글자 이내) 요구사항을 알 수 없을 땐 아래와 같이 대답해주세요.
+                - 조금 더 구체적으로 상황을 설명해주시면 정확한 안내를 도와드릴 수 있어요.
+                - 질문을 이해하지 못했는데, 다시 한 번 설명해 주실 수 있나요?
+
+                """);
+        // UserMessage = 사용자의 질문
         UserMessage userMessage = new UserMessage(text);
+        // AssistantMessage = AI의 답변
         AssistantMessage assistantMessage = new AssistantMessage("");
 
         // 옵션
@@ -79,7 +79,7 @@ public class OpenAIService {
         // 요청 및 응답
         return chatClient.prompt(prompt)
                 .call()
-                .entity(CityResponseDTO.class);
+                .entity(ChatResponse.class);
     }
 
     public Flux<String> generateStream(String text) {
