@@ -1,14 +1,17 @@
 package com.dynii.springai.domain.rag.service;
 
+import com.dynii.springai.domain.openai.entity.ChatEntity;
 import com.dynii.springai.domain.openai.entity.Conversation;
 import com.dynii.springai.domain.openai.entity.ConversationStatus;
+import com.dynii.springai.domain.openai.repository.ChatRepository;
 import com.dynii.springai.domain.rag.dto.ChatResponse;
 import com.dynii.springai.domain.rag.repository.ConversationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
 @Service
@@ -16,8 +19,14 @@ import java.util.Optional;
 public class AdminEscalationService {
 
     private final ConversationRepository conversationRepository;
+    private final ChatRepository chatRepository;
+    private final ChatSaveService chatSaveService;
+    private final ChatMemoryRepository chatMemoryRepository;
 
-    public ChatResponse escalate(long conversationId) {
+    @Transactional
+    public ChatResponse escalate(String question, long conversationId, String userId) {
+
+        String escalateMessage = "현재 상담 내용이 관리자에게 이관되었어요.\n곧 관리자를 통해 답변드릴게요.";
 
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -28,8 +37,11 @@ public class AdminEscalationService {
         conversationRepository.save(conversation);
         log.info(conversation);
 
+        chatSaveService.saveChat(userId, question, escalateMessage);
+        chatSaveService.saveChatMemory(userId, question, chatMemoryRepository);
+
         return ChatResponse.builder()
-                .answer("현재 상담 내용이 관리자에게 이관되었어요.\n곧 관리자를 통해 답변드릴게요.")
+                .answer(escalateMessage)
                 .escalated(true)
                 .build();
     }

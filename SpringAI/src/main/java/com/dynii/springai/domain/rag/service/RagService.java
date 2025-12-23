@@ -50,8 +50,9 @@ public class RagService {
         // 트리거가 포함된 질문이면 이관
         if (question != null && question.equals(ESCALATION_TRIGGER)) {
             log.info("Escalation triggered");
+
             /* 여기에 이관 조치할 때 수행할 로직 추가 */
-            return adminEscalationService.escalate(conversation.getConversationId());
+            return adminEscalationService.escalate(question, conversation.getConversationId(), userId);
         }
 
         int candidates = topK > 0 ? topK : properties.getTopK();

@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class ConversationService {
@@ -26,5 +28,17 @@ public class ConversationService {
                     return conversationRepository.save(c);
                 });
     }
+
+    @Transactional(readOnly = true)
+    public Conversation getLatestConversation(String userId) {
+        return conversationRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+                .orElseThrow(() -> new IllegalStateException("Conversation not found for userId=" + userId));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Conversation> findLatestConversation(String userId) {
+        return conversationRepository.findTopByUserIdOrderByCreatedAtDesc(userId);
+    }
+
 }
 

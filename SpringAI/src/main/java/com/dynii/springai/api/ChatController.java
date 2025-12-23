@@ -99,8 +99,10 @@ public class ChatController {
     @ResponseBody
     @GetMapping("/chat/status/{userId}")
     public Map<String, String> getStatus(@PathVariable String userId) {
-        Conversation conversation = conversationService.getOrCreateActiveConversation(userId);
-        return Map.of("status", conversation.getStatus().toString());
+
+        return conversationService.findLatestConversation(userId)
+                .map(c -> Map.of("status", c.getStatus().name()))
+                .orElse(Map.of("status", "BOT_ACTIVE"));
     }
 
 

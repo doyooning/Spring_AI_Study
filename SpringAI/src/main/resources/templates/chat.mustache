@@ -124,15 +124,10 @@
         const response = await fetch(`/chat/status/${userId}`);
         const data = await response.json();
 
-        if (data.status === 'ESCALATED') {
+        if (data.status !== 'BOT_ACTIVE') {
             disableInputArea('관리자 상담 대기중입니다.');
         }
     }
-
-    window.addEventListener('DOMContentLoaded', async () => {
-        await loadChatHistory();
-        await checkConversationStatus();
-    });
 
     window.addEventListener('DOMContentLoaded', async () => {
         await loadChatHistory();
@@ -196,8 +191,6 @@
         if (e.key === 'Enter') sendBtn.click();
     });
 
-    // 페이지 로드 시 대화 불러오기
-    window.addEventListener('DOMContentLoaded', loadChatHistory);
 
 </script>
 

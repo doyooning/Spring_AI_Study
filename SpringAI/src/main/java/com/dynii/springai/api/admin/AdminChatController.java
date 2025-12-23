@@ -1,4 +1,4 @@
-package com.dynii.springai.api;
+package com.dynii.springai.api.admin;
 
 import com.dynii.springai.domain.openai.entity.Conversation;
 import com.dynii.springai.domain.openai.entity.ConversationStatus;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
-import java.util.Optional;
 
 @Log4j2
 @Controller

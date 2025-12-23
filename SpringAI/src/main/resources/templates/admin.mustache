@@ -1,0 +1,40 @@
+<body>
+
+<h2>이관된 상담 목록</h2>
+
+<ul id="conversationList"></ul>
+
+<script>
+    async function loadEscalatedConversations() {
+        const response = await fetch('/admin/conversations/escalated');
+        const conversations = await response.json();
+
+        const list = document.getElementById('conversationList');
+        list.innerHTML = '';
+
+        conversations.forEach(c => {
+            const li = document.createElement('li');
+            li.textContent = `Conversation ID: ${c.id} / User: ${c.userId}`;
+
+            const btn = document.createElement('button');
+            btn.textContent = '상담하기';
+            btn.onclick = () => startConversation(c.id);
+
+            li.appendChild(btn);
+            list.appendChild(li);
+        });
+    }
+
+    async function startConversation(conversationId) {
+        await fetch(`/admin/conversations/${conversationId}/start`, {
+            method: 'POST'
+        });
+
+        alert('상담을 시작했습니다.');
+        loadEscalatedConversations();
+    }
+
+    window.addEventListener('DOMContentLoaded', loadEscalatedConversations);
+</script>
+
+</body>
