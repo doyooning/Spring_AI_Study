@@ -28,8 +28,13 @@ public class AdminChatController {
     @PostMapping("/admin/chats/{conversationId}/start")
     public void startAdminChat(@PathVariable Long conversationId) {
 
-        Conversation conversation = conversationRepository.findById(conversationId).orElse(null);
-        conversation.setStatus(ConversationStatus.ADMIN_ACTIVE);
-        conversationRepository.save(conversationId);
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Conversation not found. id=" + conversationId
+                ));
+
+        conversation.setStatus(ConversationStatus.ESCALATED);
+        conversationRepository.save(conversation);
+        log.info(conversation);
     }
 }

@@ -1,12 +1,12 @@
 package com.dynii.springai.api;
 
-import com.dynii.springai.domain.openai.dto.CityResponseDTO;
 import com.dynii.springai.domain.openai.entity.ChatEntity;
+import com.dynii.springai.domain.openai.entity.Conversation;
 import com.dynii.springai.domain.openai.service.ChatService;
+import com.dynii.springai.domain.openai.service.ConversationService;
 import com.dynii.springai.domain.openai.service.OpenAIService;
 import com.dynii.springai.domain.rag.dto.ChatRequest;
 import com.dynii.springai.domain.rag.dto.ChatResponse;
-import com.dynii.springai.domain.rag.entity.ChatRoute;
 import com.dynii.springai.domain.rag.entity.RouteDecision;
 import com.dynii.springai.domain.rag.service.ChatRoutingService;
 import com.dynii.springai.domain.rag.service.RagIngestService;
@@ -32,6 +32,7 @@ public class ChatController {
     private final ChatService chatService;
     private final RagService ragService;
     private final ChatRoutingService chatRoutingService;
+    private final ConversationService conversationService;
 
     // 채팅 페이지 접속
     @GetMapping("/")
@@ -39,18 +40,16 @@ public class ChatController {
         return "chat";
     }
 
-//    @GetMapping("/rag")
-//    public String chatRagPage() {
-//        return "rag";
-//    }
-
     // 논 스트림
     @ResponseBody
     @PostMapping("/chat")
     public ChatResponse chat(@RequestBody ChatRequest request) {
 
         String question = request.getQuestion();
-//        log.info(question);
+        String userId = "dynii1923";
+
+        // 현재 진행 중인 대화 조회 or 생성
+        Conversation conversation = conversationService.getOrCreateActiveConversation(userId);
 
         if (question == null || question.isBlank()) {
             log.warn("Empty question received: {}", request);
@@ -75,12 +74,6 @@ public class ChatController {
         return null;
     }
 
-//    @ResponseBody
-//    @PostMapping("/rag")
-//    public ChatResponse chatWithRag(@RequestBody ChatRequest request) {
-//        return ragService.chat(request.getQuestion(), 4);
-//    }
-
     // 스트림
     @ResponseBody
     @PostMapping("/chat/stream")
@@ -102,5 +95,13 @@ public class ChatController {
         ragIngestService.ingest(file);
         return ResponseEntity.ok("업로드 완료");
     }
+
+    @ResponseBody
+    @GetMapping("/chat/status/{userId}")
+    public Map<String, String> getStatus(@PathVariable String userId) {
+        Conversation conversation = conversationService.getOrCreateActiveConversation(userId);
+        return Map.of("status", conversation.getStatus().toString());
+    }
+
 
 }

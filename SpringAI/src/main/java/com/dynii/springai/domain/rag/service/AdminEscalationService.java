@@ -5,10 +5,12 @@ import com.dynii.springai.domain.openai.entity.ConversationStatus;
 import com.dynii.springai.domain.rag.dto.ChatResponse;
 import com.dynii.springai.domain.rag.repository.ConversationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class AdminEscalationService {
@@ -17,15 +19,17 @@ public class AdminEscalationService {
 
     public ChatResponse escalate(long conversationId) {
 
-        Optional<Conversation> conversation = conversationRepository.findById(conversationId);
-        conversation.ifPresent(c -> {
-            c.setStatus(ConversationStatus.ESCALATED);
-        });
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Conversation not found. id=" + conversationId
+                ));
 
-        conversationRepository.save(conversationId);
+        conversation.setStatus(ConversationStatus.ESCALATED);
+        conversationRepository.save(conversation);
+        log.info(conversation);
 
         return ChatResponse.builder()
-                .answer("현재 상담 내용이 관리자에게 이관되었습니다.\n곧 관리자를 통해 답변드리겠습니다.")
+                .answer("현재 상담 내용이 관리자에게 이관되었어요.\n곧 관리자를 통해 답변드릴게요.")
                 .escalated(true)
                 .build();
     }

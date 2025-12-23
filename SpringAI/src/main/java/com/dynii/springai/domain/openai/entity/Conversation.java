@@ -8,6 +8,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+import static com.dynii.springai.domain.openai.entity.ConversationStatus.BOT_ACTIVE;
+
 @Entity
 @Getter
 @Setter
@@ -16,16 +18,17 @@ public class Conversation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long conversationId;
+    private Long conversationId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ConversationStatus status;
+    private ConversationStatus status = ConversationStatus.BOT_ACTIVE;
 
     @CreationTimestamp
+    @Column(updatable = false, name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
-    private long userId;
+    private String userId;
 
 }

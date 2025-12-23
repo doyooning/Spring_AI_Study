@@ -4,6 +4,7 @@ import com.dynii.springai.domain.openai.dto.CityResponseDTO;
 import com.dynii.springai.domain.openai.entity.ChatEntity;
 import com.dynii.springai.domain.openai.repository.ChatRepository;
 import com.dynii.springai.domain.rag.dto.ChatResponse;
+import com.dynii.springai.domain.rag.service.ChatSaveService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
@@ -44,11 +45,15 @@ public class OpenAIService {
 
     private final ChatMemoryRepository chatMemoryRepository;
     private final ChatRepository chatRepository;
+    private final ChatSaveService chatSaveService;
 
     // Chat 모델
     public ChatResponse generate(String text) {
 
         ChatClient chatClient = ChatClient.create(openAiChatModel);
+
+        // 유저&페이지별 ChatMemory를 관리하기 위한 key (우선은 명시적으로)
+        String userId = "dynii1923";
 
         // 메시지
         // SystemMessage = 프롬프팅할 내용
@@ -76,10 +81,16 @@ public class OpenAIService {
         // 프롬프트
         Prompt prompt = new Prompt(List.of(systemMessage, userMessage, assistantMessage), options);
 
-        // 요청 및 응답
-        return chatClient.prompt(prompt)
+        // LLM 호출
+        ChatResponse response = chatClient.prompt(prompt)
                 .call()
                 .entity(ChatResponse.class);
+
+        // 여기서 대화 저장
+        chatSaveService.saveChat(userId, text, response.getAnswer());
+        chatSaveService.saveChatMemory(userId, text, chatMemoryRepository);
+
+        return response;
     }
 
     public Flux<String> generateStream(String text) {
@@ -87,7 +98,7 @@ public class OpenAIService {
         ChatClient chatClient = ChatClient.create(openAiChatModel);
 
         // 유저&페이지별 ChatMemory를 관리하기 위한 key (우선은 명시적으로)
-        String userId = "dynii1923" + "_" + "3";
+        String userId = "dynii1923";
 
         // 전체 대화 저장용
         ChatEntity chatUserEntity = new ChatEntity();

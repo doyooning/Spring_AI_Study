@@ -1,10 +1,13 @@
 package com.dynii.springai.domain.rag.service;
 
+import com.dynii.springai.domain.openai.entity.Conversation;
+import com.dynii.springai.domain.openai.service.ConversationService;
 import com.dynii.springai.domain.rag.dto.ChatResponse;
 import com.dynii.springai.config.RagVectorProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -29,20 +32,26 @@ public class RagService {
     private final ChatModel chatModel;
     private final RagVectorProperties properties;
     private final AdminEscalationService adminEscalationService;
+    private final ConversationService conversationService;
+    private final ChatSaveService chatSaveService;
+    private final ChatMemoryRepository chatMemoryRepository;
 
     // 관리자 이관 트리거
     private static final String ESCALATION_TRIGGER = "관리자 연결";
 
     public ChatResponse chat(String question, int topK) {
+        String userId = "dynii1923";
+
+        Conversation conversation = conversationService.getOrCreateActiveConversation(userId);
+
         // 이관 여부를 담는 escalated
         boolean escalated = false;
-        long conversationId = 1L;
 
         // 트리거가 포함된 질문이면 이관
-        if (question != null && question.contains(ESCALATION_TRIGGER)) {
-
+        if (question != null && question.equals(ESCALATION_TRIGGER)) {
+            log.info("Escalation triggered");
             /* 여기에 이관 조치할 때 수행할 로직 추가 */
-            return adminEscalationService.escalate(conversationId);
+            return adminEscalationService.escalate(conversation.getConversationId());
         }
 
         int candidates = topK > 0 ? topK : properties.getTopK();
@@ -86,20 +95,13 @@ public class RagService {
                         위 조건에 해당하는 경우에는
                         반드시 아래 문장 중 하나의 형태로만 응답하세요.
                         
-                        - "해당 내용은 현재 제공된 정보로는 안내드릴 수 없어요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요."
-                        - "개인 정보 또는 개별 확인이 필요한 내용으로, 관리자 상담을 통해 안내가 가능해요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요."
-                        - "요청하신 내용은 관리자 확인이 필요하여 상담 연결이 필요해요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요."
-                        - "관리자와 직접 상담을 원하시는 것 같아요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요."
+                        - 해당 내용은 현재 제공된 정보로는 안내드릴 수 없어요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요.
+                        - 개인 정보 또는 개별 확인이 필요한 내용으로, 관리자 상담을 통해 안내가 가능해요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요.
+                        - 요청하신 내용은 관리자 확인이 필요하여 상담 연결이 필요해요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요.
+                        - 관리자와 직접 상담을 원하시는 것 같아요. "관리자 연결"을 입력하시면 관리자에게 문의가 접수돼요.
                         
                         절대 위 문구 외의 임의의 답변을 생성하지 마세요.
                         
-                        만약 고객이 "관리자 연결"이라고 입력한 경우에는
-                        반드시 아래 문장 중 하나의 형태로만 응답하세요.
-                        
-                        - "현재 상담 내용이 관리자에게 이관되었어요. 곧 관리자를 통해 답변드릴게요."
-                        - "고객님의 문의가 관리자에게 이관되었어요. 곧 관리자를 통해 답변드릴게요."
-                        
-                        절대 위 문구 외의 임의의 답변을 생성하지 마세요.
                         """
         ));
         messages.add(new UserMessage("Context:\n" + context + "\n\nQuestion: " + question));
@@ -113,6 +115,10 @@ public class RagService {
 
         log.info("Chatbot sources: {}", sources);
         log.info("Chatbot escalated: {}", escalated);
+
+        // 여기서 대화 저장
+        chatSaveService.saveChat(userId, question, answer);
+        chatSaveService.saveChatMemory(userId, question, chatMemoryRepository);
         return new ChatResponse(answer, sources, escalated);
     }
 

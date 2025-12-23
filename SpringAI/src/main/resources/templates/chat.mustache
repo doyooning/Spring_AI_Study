@@ -103,7 +103,7 @@
     const inputText = document.getElementById('inputText');
     const sendBtn = document.getElementById('sendBtn');
 
-    const userId = 'dyniiyeyo_3';
+    const userId = 'dynii1923';
 
     // 대화 기록 불러오기
     async function loadChatHistory() {
@@ -119,6 +119,25 @@
         });
         chatDiv.scrollTop = chatDiv.scrollHeight;
     }
+
+    async function checkConversationStatus() {
+        const response = await fetch(`/chat/status/${userId}`);
+        const data = await response.json();
+
+        if (data.status === 'ESCALATED') {
+            disableInputArea('관리자 상담 대기중입니다.');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        await loadChatHistory();
+        await checkConversationStatus();
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        await loadChatHistory();
+        await checkConversationStatus();
+    });
 
     // 채팅 API
     async function sendMessage(text) {
@@ -137,16 +156,25 @@
         chatDiv.appendChild(botMessageDiv);
         chatDiv.scrollTop = chatDiv.scrollHeight;
 
-        // let botMessage = '';
-        //
-        // while (true) {
-        //     const { value, done } = await reader.read();
-        //     if (done) break;
-        //     const chunk = decoder.decode(value, { stream: true });
-        //     botMessage += chunk;
-        //     botMessageDiv.textContent = botMessage;
-        //     chatDiv.scrollTop = chatDiv.scrollHeight;
-        // }
+        // 관리자 이관 시 입력창 비활성화
+        if (data.escalated === true) {
+            disableInputArea('관리자에게 상담이 이관되었습니다. 잠시만 기다려 주세요.');
+        }
+    }
+
+    // 관리자 이관되면 채팅 비활성화
+    function disableInputArea(message) {
+        inputText.disabled = true;
+        sendBtn.disabled = true;
+        inputText.placeholder = '관리자 상담 대기중입니다.';
+
+        if (message) {
+            const infoDiv = document.createElement('div');
+            infoDiv.classList.add('message', 'system');
+            infoDiv.textContent = message;
+            chatDiv.appendChild(infoDiv);
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
     }
 
     sendBtn.addEventListener('click', async () => {
