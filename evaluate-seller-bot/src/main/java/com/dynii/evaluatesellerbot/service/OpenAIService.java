@@ -1,9 +1,8 @@
 package com.dynii.evaluatesellerbot.service;
 
-import com.dynii.springai.domain.openai.entity.ChatEntity;
-import com.dynii.springai.domain.openai.repository.ChatRepository;
-import com.dynii.springai.domain.rag.dto.ChatResponse;
-import com.dynii.springai.domain.rag.service.ChatSaveService;
+import com.dynii.evaluatesellerbot.dto.AiResponse;
+import com.dynii.evaluatesellerbot.repository.ChatRepository;
+import com.dynii.evaluatesellerbot.service.ChatSaveService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.audio.transcription.AudioTranscriptionPrompt;
 import org.springframework.ai.audio.transcription.AudioTranscriptionResponse;
@@ -44,7 +43,7 @@ public class OpenAIService {
     private final ChatSaveService chatSaveService;
 
     // Chat 모델
-    public ChatResponse generate(String text) {
+    public AiResponse generate(String text) {
 
         ChatClient chatClient = ChatClient.create(openAiChatModel);
 
@@ -74,10 +73,10 @@ public class OpenAIService {
         Prompt prompt = new Prompt(List.of(systemMessage, userMessage, assistantMessage), options);
 
         // LLM 호출
-        ChatResponse response = chatClient.prompt(prompt)
+        AiResponse response = chatClient.prompt(prompt)
                 .tools(new ChatTools())
                 .call()
-                .entity(ChatResponse.class);
+                .entity(AiResponse.class);
 
         return response;
     }
