@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Evaluations</title>
+</head>
+<body>
+<h1>AI Evaluations</h1>
+
+<p><a href="/seller/register">Back to Register</a></p>
+
+<table border="1" cellpadding="6" cellspacing="0">
+    <thead>
+    <tr>
+        <th>Eval ID</th>
+        <th>Seller ID</th>
+        <th>Register ID</th>
+        <th>Total Score</th>
+        <th>Grade</th>
+        <th>Summary</th>
+        <th>Created At</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{#evaluations}}
+    <tr>
+        <td>{{aiEvalId}}</td>
+        <td>{{sellerId}}</td>
+        <td>{{registerId}}</td>
+        <td>{{totalScore}}</td>
+        <td>{{sellerGrade}}</td>
+        <td>{{summary}}</td>
+        <td>{{createdAt}}</td>
+    </tr>
+    {{/evaluations}}
+    {{^evaluations}}
+    <tr>
+        <td colspan="7">No evaluations yet.</td>
+    </tr>
+    {{/evaluations}}
+    </tbody>
+</table>
+</body>
+</html>
